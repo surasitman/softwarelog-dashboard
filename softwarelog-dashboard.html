@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Software Usage Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── Token System ─────────────────────────────────────────── */
+:root {
+  --bg: #F0F4F8;
+  --surface: #FFFFFF;
+  --surface2: #F7F9FC;
+  --border: #DDE3EA;
+  --fg: #1A2332;
+  --fg2: #4A5568;
+  --fg3: #8896A8;
+  --accent: #1D5BB5;
+  --accent2: #2A7BF0;
+  --accent-soft: #EBF2FF;
+
+  --sw-saltd:    #2563EB;
+  --sw-ansyslmd: #C2360A;
+  --sw-HPW:      #15803D;
+  --sw-MLM:      #7C3AED;
+  --sw-orglab:   #C47408;
+  --sw-SW_D:     #0E7490;
+  --sw-MSC:      #BE185D;
+
+  --good: #15803D;
+  --warn: #C47408;
+  --info: #1D5BB5;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1620;
+    --surface: #1A2436;
+    --surface2: #1F2D40;
+    --border: #2D3D52;
+    --fg: #E8EFF7;
+    --fg2: #9AACBF;
+    --fg3: #5C7189;
+    --accent: #3B82F6;
+    --accent2: #60A5FA;
+    --accent-soft: #1E3154;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1620;
+  --surface: #1A2436;
+  --surface2: #1F2D40;
+  --border: #2D3D52;
+  --fg: #E8EFF7;
+  --fg2: #9AACBF;
+  --fg3: #5C7189;
+  --accent: #3B82F6;
+  --accent2: #60A5FA;
+  --accent-soft: #1E3154;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.35), 0 1px 4px rgba(0,0,0,0.2);
+  color-scheme: dark;
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Sarabun', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  padding-inline: 0;
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  padding: 0 24px;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 60px;
+  max-width: 1600px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: grid; place-items: center;
+  color: white;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.logo-text h1 {
+  font-size: 16px; font-weight: 700; line-height: 1.2;
+  color: var(--fg);
+}
+.logo-text p {
+  font-size: 11px; color: var(--fg3); line-height: 1;
+}
+.header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px; font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+.btn-icon { font-size: 15px; }
+.btn-primary {
+  background: var(--accent);
+  color: white; border-color: var(--accent);
+}
+.btn-primary:hover { background: var(--accent2); border-color: var(--accent2); color: white; }
+.toggle-theme {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--fg2);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+.toggle-theme:hover { border-color: var(--accent); }
+
+/* ── Main ───────────────────────────────────────────────── */
+.main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* ── Filter Bar ─────────────────────────────────────────── */
+.filter-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 12px; font-weight: 600; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.year-tabs { display: flex; gap: 4px; }
+.year-tab {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--fg2);
+  font-family: inherit;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.year-tab.active {
+  background: var(--accent);
+  color: white; border-color: var(--accent);
+}
+.year-tab:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+select.filter-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  appearance: auto;
+}
+select.filter-select:focus { outline: 2px solid var(--accent); }
+
+.filter-divider { width: 1px; height: 24px; background: var(--border); }
+
+/* ── KPI Cards ──────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--kpi-color, var(--accent));
+}
+.kpi-icon {
+  font-size: 24px; margin-bottom: 8px; display: block;
+}
+.kpi-label {
+  font-size: 12px; color: var(--fg3); font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.kpi-value {
+  font-size: 28px; font-weight: 700; color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.kpi-sub { font-size: 12px; color: var(--fg3); margin-top: 4px; }
+
+/* ── Charts Grid ────────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.charts-grid-3 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+  .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; }
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+.chart-title {
+  font-size: 14px; font-weight: 600; color: var(--fg);
+}
+.chart-subtitle {
+  font-size: 12px; color: var(--fg3); margin-top: 2px;
+}
+.chart-wrap { position: relative; }
+.chart-wrap canvas { max-height: 260px; }
+
+/* ── Heatmap ────────────────────────────────────────────── */
+.heatmap-wrap { overflow-x: auto; }
+.heatmap-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.heatmap-table th {
+  padding: 8px 10px;
+  font-weight: 600; font-size: 11px;
+  color: var(--fg3);
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.heatmap-table td {
+  padding: 7px 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  transition: opacity 0.1s;
+  cursor: default;
+  position: relative;
+}
+.heatmap-table td.rg-label {
+  text-align: left;
+  font-weight: 600;
+  color: var(--fg2);
+  white-space: nowrap;
+  background: var(--surface2);
+  border-right: 2px solid var(--border);
+  min-width: 90px;
+}
+.heatmap-table td:hover:not(.rg-label)::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%; left: 50%;
+  transform: translateX(-50%);
+  background: var(--fg);
+  color: var(--surface);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Top Users ──────────────────────────────────────────── */
+.users-list { list-style: none; }
+.user-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.user-item:last-child { border-bottom: none; }
+.user-rank {
+  font-size: 11px; font-weight: 700; color: var(--fg3);
+  width: 20px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.user-bar-wrap { flex: 1; min-width: 0; }
+.user-name {
+  font-size: 13px; font-weight: 500; color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.user-rg { font-size: 11px; color: var(--fg3); }
+.user-bar-bg { background: var(--surface2); border-radius: 3px; height: 4px; margin-top: 4px; }
+.user-bar { background: var(--accent); height: 4px; border-radius: 3px; transition: width 0.4s; }
+.user-hours {
+  font-size: 13px; font-weight: 600; color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Data Table ─────────────────────────────────────────── */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.table-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.table-toolbar h3 { font-size: 14px; font-weight: 600; flex: 1; }
+.search-box {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.search-box input {
+  border: none; background: none;
+  font-family: inherit; font-size: 13px;
+  color: var(--fg); outline: none;
+  width: 200px;
+}
+.search-box input::placeholder { color: var(--fg3); }
+.table-wrap { overflow-x: auto; }
+table.data-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+table.data-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--fg3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+table.data-table th:hover { color: var(--accent); }
+table.data-table th .sort-icon { margin-left: 4px; opacity: 0.4; }
+table.data-table th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+table.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg2);
+}
+table.data-table tr:hover td { background: var(--accent-soft); }
+table.data-table tr:last-child td { border-bottom: none; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.table-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  gap: 8px; flex-wrap: wrap;
+}
+.table-footer span { font-size: 12px; color: var(--fg3); }
+.page-btns { display: flex; gap: 4px; }
+.page-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--fg2);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.page-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+.page-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Insights ───────────────────────────────────────────── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.insight-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--insight-color, var(--accent));
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+.insight-icon { font-size: 20px; margin-bottom: 4px; }
+.insight-title { font-size: 12px; font-weight: 600; color: var(--fg3); text-transform: uppercase; letter-spacing: 0.04em; }
+.insight-text { font-size: 14px; color: var(--fg); margin-top: 4px; line-height: 1.5; }
+
+/* ── SW Legend ──────────────────────────────────────────── */
+.sw-legend {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.sw-chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid transparent;
+  cursor: default;
+}
+.sw-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Misc ───────────────────────────────────────────────── */
+.section-title {
+  font-size: 13px; font-weight: 600; color: var(--fg3);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::after {
+  content: '';
+  flex: 1; height: 1px; background: var(--border);
+}
+.full-width { grid-column: 1 / -1; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+
+/* ── Chart tooltip override ─────────────────────────────── */
+.chartjs-tooltip {
+  background: var(--fg) !important;
+  color: var(--surface) !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+}
+
+/* ── Hidden file input ──────────────────────────────────── */
+#file-import { display: none; }
+
+@media (max-width: 600px) {
+  .main { padding: 14px 14px; }
+  .kpi-value { font-size: 22px; }
+  .filter-bar { padding: 12px 14px; gap: 10px; }
+  .filter-divider { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <div class="logo-icon">📊</div>
+      <div class="logo-text">
+        <h1>Software Usage Dashboard</h1>
+        <p>MTEC · Engineering Support Services</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="document.getElementById('file-import').click()">
+        <span class="btn-icon">📂</span> Import Excel
+      </button>
+      <button class="btn btn-primary" onclick="exportCSV()">
+        <span class="btn-icon">💾</span> Export CSV
+      </button>
+      <button class="toggle-theme" onclick="toggleTheme()" title="เปลี่ยนธีม" id="theme-btn">🌙</button>
+      <input type="file" id="file-import" accept=".xlsx,.csv" onchange="handleImport(event)">
+    </div>
+  </div>
+</header>
+
+<!-- ── Main ───────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">📅 ปี</span>
+      <div class="year-tabs">
+        <button class="year-tab active" onclick="setYear('all',this)">ทั้งหมด</button>
+        <button class="year-tab" onclick="setYear('2025',this)">2025</button>
+        <button class="year-tab" onclick="setYear('2026',this)">2026</button>
+      </div>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">🏢 RG</span>
+      <select class="filter-select" id="rg-filter" onchange="applyFilters()">
+        <option value="">ทั้งหมด</option>
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">💿 Software</span>
+      <select class="filter-select" id="sw-filter" onchange="applyFilters()">
+        <option value="">ทั้งหมด</option>
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">🏛 Center</span>
+      <select class="filter-select" id="center-filter" onchange="applyFilters()">
+        <option value="">ทั้งหมด</option>
+      </select>
+    </div>
+    <div style="margin-left:auto;">
+      <button class="btn" onclick="resetFilters()">↺ รีเซ็ต</button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:#2563EB">
+      <span class="kpi-icon">⏱️</span>
+      <div class="kpi-label">ชั่วโมงรวม</div>
+      <div class="kpi-value" id="kpi-hours">—</div>
+      <div class="kpi-sub" id="kpi-hours-sub"></div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#15803D">
+      <span class="kpi-icon">📋</span>
+      <div class="kpi-label">จำนวน Sessions</div>
+      <div class="kpi-value" id="kpi-sessions">—</div>
+      <div class="kpi-sub" id="kpi-sessions-sub"></div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#7C3AED">
+      <span class="kpi-icon">👥</span>
+      <div class="kpi-label">ผู้ใช้งาน</div>
+      <div class="kpi-value" id="kpi-users">—</div>
+      <div class="kpi-sub">Unique users</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#C47408">
+      <span class="kpi-icon">💿</span>
+      <div class="kpi-label">ซอฟต์แวร์</div>
+      <div class="kpi-value" id="kpi-sw">—</div>
+      <div class="kpi-sub">Software licenses</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#0E7490">
+      <span class="kpi-icon">📊</span>
+      <div class="kpi-label">เฉลี่ยต่อ Session</div>
+      <div class="kpi-value" id="kpi-avg">—</div>
+      <div class="kpi-sub">ชั่วโมง / Session</div>
+    </div>
+  </div>
+
+  <!-- Auto Insights -->
+  <div class="section-title">💡 Insights อัตโนมัติ</div>
+  <div class="insights-grid" id="insights-grid"></div>
+
+  <!-- Monthly Trend + SW Donut -->
+  <div class="section-title">📈 แนวโน้มรายเดือน & สัดส่วน Software</div>
+  <div class="charts-grid-3">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">ชั่วโมงการใช้งานรายเดือน</div>
+          <div class="chart-subtitle">Monthly Hours Used</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">สัดส่วน Software</div>
+          <div class="chart-subtitle">By Total Hours</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="swDonutChart" style="max-height:240px"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Software + RG bars -->
+  <div class="section-title">📦 ชั่วโมงแยกตาม Software และ RG</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">ชั่วโมงแยกตาม Software</div>
+          <div class="chart-subtitle">Hours by Software License</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="swBarChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">ชั่วโมงแยกตาม RG</div>
+          <div class="chart-subtitle">Hours by Research Group</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="rgBarChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SW × RG Heatmap -->
+  <div class="section-title">🔥 Heatmap — ชั่วโมงแยกตาม Software × RG</div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">Software Usage per Research Group</div>
+        <div class="chart-subtitle">ชั่วโมงรวม — สีเข้มกว่า = ใช้งานมากกว่า</div>
+      </div>
+    </div>
+    <div class="heatmap-wrap" id="heatmap-container"></div>
+  </div>
+
+  <!-- Top Users + By Month per SW -->
+  <div class="section-title">🏆 Top Users & Software รายเดือน</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Top 10 ผู้ใช้งาน (ชั่วโมงสูงสุด)</div>
+          <div class="chart-subtitle">Ranked by Total Hours</div>
+        </div>
+      </div>
+      <ul class="users-list" id="users-list"></ul>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">ชั่วโมงต่อ Software รายเดือน</div>
+          <div class="chart-subtitle">Stacked Monthly Hours by Software</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="stackedBarChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="section-title">📋 รายละเอียดข้อมูล</div>
+  <div class="table-card">
+    <div class="table-toolbar">
+      <h3>ตารางข้อมูล Software Usage</h3>
+      <div class="search-box">
+        <span style="color:var(--fg3)">🔍</span>
+        <input type="text" id="table-search" placeholder="ค้นหา ผู้ใช้, RG, Software..." oninput="filterTable()">
+      </div>
+      <select class="filter-select" id="table-sort" onchange="sortTable()">
+        <option value="hours-desc">ชั่วโมง ↓</option>
+        <option value="hours-asc">ชั่วโมง ↑</option>
+        <option value="sessions-desc">Sessions ↓</option>
+        <option value="month-desc">เดือน ↓</option>
+        <option value="month-asc">เดือน ↑</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>เดือน</th>
+            <th>Software</th>
+            <th>RG</th>
+            <th>ผู้ใช้งาน</th>
+            <th style="text-align:right">ชั่วโมง</th>
+            <th style="text-align:right">Sessions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span id="table-info">แสดงรายการ</span>
+      <div class="page-btns" id="page-btns"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Embedded Data ───────────────────────────────────────────
+const RAW = </script>
+<script id="data-script">
+</script>
+<script>
+// Inline the JSON data directly
+</script>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────
+const DATA_JSON = `{"all": {"total_hours": 89737.53, "total_sessions": 24336, "unique_users": 86, "unique_sw": 7, "by_software": [{"software": "saltd", "hours": 34298.29, "sessions": 6377}, {"software": "ansyslmd", "hours": 32337.98, "sessions": 5706}, {"software": "HPW", "hours": 14330.2, "sessions": 4873}, {"software": "MLM", "hours": 3547.76, "sessions": 804}, {"software": "orglab", "hours": 2911.0, "sessions": 4292}, {"software": "SW_D", "hours": 2278.31, "sessions": 1861}, {"software": "MSC", "hours": 33.99, "sessions": 423}], "by_rg": [{"rg": "EDC", "hours": 45470.13, "sessions": 7321}, {"rg": "MMA", "hours": 21593.78, "sessions": 9038}, {"rg": "NFED", "hours": 9360.71, "sessions": 1517}, {"rg": "Unknown", "hours": 5834.69, "sessions": 1335}, {"rg": "RMT", "hours": 4240.46, "sessions": 904}, {"rg": "EIRG", "hours": 1602.76, "sessions": 2232}, {"rg": "(OLD)EDC", "hours": 585.24, "sessions": 173}, {"rg": "APT", "hours": 511.45, "sessions": 799}, {"rg": "TSMA", "hours": 241.42, "sessions": 756}, {"rg": "ENV", "hours": 153.22, "sessions": 76}, {"rg": "LCRG", "hours": 79.94, "sessions": 100}, {"rg": "BMD", "hours": 30.42, "sessions": 50}, {"rg": "CCM", "hours": 16.65, "sessions": 8}, {"rg": "IRM", "hours": 16.55, "sessions": 22}, {"rg": "USAM", "hours": 0.08, "sessions": 1}, {"rg": "TIIS", "hours": 0.03, "sessions": 4}], "by_month": [{"month": "2025-07", "hours": 4850.61, "label": "07/25"}, {"month": "2025-08", "hours": 3125.95, "label": "08/25"}, {"month": "2025-09", "hours": 8002.22, "label": "09/25"}, {"month": "2025-10", "hours": 5132.72, "label": "10/25"}, {"month": "2025-11", "hours": 12333.77, "label": "11/25"}, {"month": "2025-12", "hours": 4768.49, "label": "12/25"}, {"month": "2026-01", "hours": 6353.41, "label": "01/26"}, {"month": "2026-02", "hours": 5281.07, "label": "02/26"}, {"month": "2026-03", "hours": 10414.28, "label": "03/26"}, {"month": "2026-04", "hours": 5382.21, "label": "04/26"}, {"month": "2026-05", "hours": 4742.9, "label": "05/26"}, {"month": "2026-06", "hours": 5852.11, "label": "06/26"}, {"month": "2026-07", "hours": 2526.17, "label": "07/26"}, {"month": "2026-08", "hours": 5242.35, "label": "08/26"}, {"month": "2026-09", "hours": 5729.27, "label": "09/26"}], "sw_rg": {"(OLD)EDC": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 98.05, "ansyslmd": 487.19, "orglab": 0.0, "saltd": 0.0}, "APT": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 56.02, "ansyslmd": 0.0, "orglab": 455.43, "saltd": 0.0}, "BMD": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 8.12, "ansyslmd": 0.0, "orglab": 22.3, "saltd": 0.0}, "CCM": {"HPW": 0.0, "MLM": 11.28, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 5.37, "saltd": 0.0}, "EDC": {"HPW": 777.53, "MLM": 401.1, "MSC": 0.0, "SW_D": 1541.67, "ansyslmd": 31848.26, "orglab": 10.68, "saltd": 10890.89}, "EIRG": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 1602.76, "saltd": 0.0}, "ENV": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 153.22, "saltd": 0.0}, "IRM": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 16.55, "saltd": 0.0}, "LCRG": {"HPW": 0.0, "MLM": 14.39, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 65.55, "saltd": 0.0}, "MMA": {"HPW": 8431.08, "MLM": 0.0, "MSC": 33.99, "SW_D": 195.76, "ansyslmd": 2.18, "orglab": 4.3, "saltd": 12926.47}, "NFED": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.0, "saltd": 9360.71}, "RMT": {"HPW": 0.0, "MLM": 3120.99, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.09, "saltd": 1119.38}, "TIIS": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.03, "saltd": 0.0}, "TSMA": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 241.42, "saltd": 0.0}, "USAM": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.08, "orglab": 0.0, "saltd": 0.0}, "Unknown": {"HPW": 5121.59, "MLM": 0.0, "MSC": 0.0, "SW_D": 378.69, "ansyslmd": 0.27, "orglab": 333.3, "saltd": 0.84}}, "top_users": [{"name": "พีชเรขา ด้วงสงค์", "rg": "EDC", "hours": 30359.25, "sessions": 5123}, {"name": "ดำรงค์ ถนอมจิตร", "rg": "MMA", "hours": 11876.99, "sessions": 2999}, {"name": "ณรงค์ พิทักษ์ทรัพย์สิน", "rg": "EDC", "hours": 10739.82, "sessions": 156}, {"name": "วัชรากร สุศิวะ", "rg": "NFED", "hours": 9332.66, "sessions": 1493}, {"name": "ปิยมาภรณ์ อุตมัง", "rg": "MMA", "hours": 7769.52, "sessions": 3177}, {"name": "Unknown", "rg": "Unknown", "hours": 5834.69, "sessions": 1335}, {"name": "วรรษมน ภู่สกุลขจร", "rg": "RMT", "hours": 2383.21, "sessions": 530}, {"name": "ไพบูลย์ วัฒนพรภัณฑ์", "rg": "RMT", "hours": 1074.85, "sessions": 169}, {"name": "เอกชัย กิติแก้วทวีเสริฐ", "rg": "MMA", "hours": 1046.84, "sessions": 1318}, {"name": "อธิพงษ์ มาลาทิพย์", "rg": "EDC", "hours": 1003.56, "sessions": 88}, {"name": "เสฏฐวรรธ สุจริตภวัตสกุล", "rg": "EDC", "hours": 777.77, "sessions": 126}, {"name": "ประพันธ์ ปัญญาวัน", "rg": "MMA", "hours": 664.2, "sessions": 922}, {"name": "ปราโมทย์ คูวัฒนสุชาติ", "rg": "RMT", "hours": 641.07, "sessions": 99}, {"name": "ประสิทธิ์ วัฒนวงศ์สกุล", "rg": "EDC", "hours": 553.42, "sessions": 321}, {"name": "พชรพล สมณะ", "rg": "(OLD)EDC", "hours": 527.98, "sessions": 117}, {"name": "วิธวัช ทัพสวัสดิ์", "rg": "EDC", "hours": 488.28, "sessions": 294}, {"name": "ธนรรค อุทกะพันธ์", "rg": "EDC", "hours": 390.09, "sessions": 109}, {"name": "นฤมล อภิญญากุล", "rg": "EIRG", "hours": 383.32, "sessions": 719}, {"name": "เขมชาติ รื่นเริงฤทธิ์", "rg": "EIRG", "hours": 318.1, "sessions": 374}, {"name": "ยศกร ประทุมวัลย์", "rg": "EDC", "hours": 306.84, "sessions": 91}], "by_center": {"CO": 9360.79, "ENTEC": 1682.7, "MTEC": 72859.35, "Unknown": 5834.69}, "sw_list": ["HPW", "MLM", "MSC", "SW_D", "ansyslmd", "orglab", "saltd"], "rg_list": ["EDC", "MMA", "NFED", "Unknown", "RMT", "EIRG", "(OLD)EDC", "APT", "TSMA", "ENV", "LCRG", "BMD", "CCM", "IRM", "USAM"]}, "2025": {"total_hours": 38213.76, "total_sessions": 7900, "unique_users": 69, "unique_sw": 6, "by_software": [{"software": "saltd", "hours": 15601.31, "sessions": 2457}, {"software": "ansyslmd", "hours": 11670.42, "sessions": 1701}, {"software": "HPW", "hours": 7282.02, "sessions": 1360}, {"software": "MLM", "hours": 1749.89, "sessions": 339}, {"software": "orglab", "hours": 1261.31, "sessions": 1527}, {"software": "SW_D", "hours": 648.81, "sessions": 516}], "by_rg": [{"rg": "EDC", "hours": 19282.31, "sessions": 2079}, {"rg": "MMA", "hours": 8837.46, "sessions": 2458}, {"rg": "NFED", "hours": 3466.51, "sessions": 892}, {"rg": "Unknown", "hours": 3151.49, "sessions": 438}, {"rg": "RMT", "hours": 1812.89, "sessions": 472}, {"rg": "(OLD)EDC", "hours": 585.24, "sessions": 173}, {"rg": "EIRG", "hours": 563.57, "sessions": 741}, {"rg": "APT", "hours": 235.21, "sessions": 346}, {"rg": "ENV", "hours": 142.51, "sessions": 66}, {"rg": "LCRG", "hours": 51.32, "sessions": 58}, {"rg": "TSMA", "hours": 48.38, "sessions": 114}, {"rg": "BMD", "hours": 18.77, "sessions": 36}, {"rg": "IRM", "hours": 16.55, "sessions": 22}, {"rg": "CCM", "hours": 1.47, "sessions": 4}, {"rg": "USAM", "hours": 0.08, "sessions": 1}], "by_month": [{"month": "2025-07", "hours": 4850.61, "label": "07/25"}, {"month": "2025-08", "hours": 3125.95, "label": "08/25"}, {"month": "2025-09", "hours": 8002.22, "label": "09/25"}, {"month": "2025-10", "hours": 5132.72, "label": "10/25"}, {"month": "2025-11", "hours": 12333.77, "label": "11/25"}, {"month": "2025-12", "hours": 4768.49, "label": "12/25"}], "sw_rg": {"(OLD)EDC": {"HPW": 0.0, "MLM": 0.0, "SW_D": 98.05, "ansyslmd": 487.19, "orglab": 0.0, "saltd": 0.0}, "APT": {"HPW": 0.0, "MLM": 0.0, "SW_D": 20.05, "ansyslmd": 0.0, "orglab": 215.16, "saltd": 0.0}, "BMD": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.91, "ansyslmd": 0.0, "orglab": 17.86, "saltd": 0.0}, "CCM": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 1.47, "saltd": 0.0}, "EDC": {"HPW": 761.24, "MLM": 18.03, "SW_D": 398.05, "ansyslmd": 11182.95, "orglab": 9.64, "saltd": 6912.4}, "EIRG": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 563.57, "saltd": 0.0}, "ENV": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 142.51, "saltd": 0.0}, "IRM": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 16.55, "saltd": 0.0}, "LCRG": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 51.32, "saltd": 0.0}, "MMA": {"HPW": 3682.61, "MLM": 0.0, "SW_D": 10.02, "ansyslmd": 0.0, "orglab": 4.28, "saltd": 5140.55}, "NFED": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.0, "saltd": 3466.51}, "RMT": {"HPW": 0.0, "MLM": 1731.86, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.0, "saltd": 81.03}, "TSMA": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 48.38, "saltd": 0.0}, "USAM": {"HPW": 0.0, "MLM": 0.0, "SW_D": 0.0, "ansyslmd": 0.08, "orglab": 0.0, "saltd": 0.0}, "Unknown": {"HPW": 2838.17, "MLM": 0.0, "SW_D": 121.73, "ansyslmd": 0.2, "orglab": 190.57, "saltd": 0.82}}, "top_users": [{"name": "พีชเรขา ด้วงสงค์", "rg": "EDC", "hours": 11174.7, "sessions": 1550}, {"name": "ณรงค์ พิทักษ์ทรัพย์สิน", "rg": "EDC", "hours": 6912.28, "sessions": 30}, {"name": "ดำรงค์ ถนอมจิตร", "rg": "MMA", "hours": 4823.17, "sessions": 862}, {"name": "ปิยมาภรณ์ อุตมัง", "rg": "MMA", "hours": 3552.98, "sessions": 898}, {"name": "วัชรากร สุศิวะ", "rg": "NFED", "hours": 3463.66, "sessions": 883}, {"name": "Unknown", "rg": "Unknown", "hours": 3151.49, "sessions": 438}, {"name": "วรรษมน ภู่สกุลขจร", "rg": "RMT", "hours": 1472.44, "sessions": 272}, {"name": "เสฏฐวรรธ สุจริตภวัตสกุล", "rg": "EDC", "hours": 761.24, "sessions": 107}, {"name": "พชรพล สมณะ", "rg": "(OLD)EDC", "hours": 527.98, "sessions": 117}, {"name": "เอกชัย กิติแก้วทวีเสริฐ", "rg": "MMA", "hours": 317.37, "sessions": 516}, {"name": "วิธวัช ทัพสวัสดิ์", "rg": "EDC", "hours": 200.89, "sessions": 113}, {"name": "ปราโมทย์ คูวัฒนสุชาติ", "rg": "RMT", "hours": 183.85, "sessions": 36}, {"name": "อังคณา ผ่องผุด", "rg": "ENV", "hours": 136.6, "sessions": 62}, {"name": "ประพันธ์ ปัญญาวัน", "rg": "MMA", "hours": 129.64, "sessions": 166}, {"name": "นฤมล อภิญญากุล", "rg": "EIRG", "hours": 113.73, "sessions": 205}, {"name": "เขมชาติ รื่นเริงฤทธิ์", "rg": "EIRG", "hours": 112.88, "sessions": 113}, {"name": "วรรณี วาสุเทพ", "rg": "APT", "hours": 81.13, "sessions": 105}, {"name": "ณัฏฐกา ชิโนมี", "rg": "RMT", "hours": 75.57, "sessions": 21}, {"name": "วราภรณ์ ปานจันทร์", "rg": "APT", "hours": 74.46, "sessions": 156}, {"name": "ธนทร ศรีสุข", "rg": "EIRG", "hours": 68.71, "sessions": 86}], "by_center": {"CO": 3466.59, "ENTEC": 614.89, "MTEC": 30980.79, "Unknown": 3151.49}, "sw_list": ["HPW", "MLM", "SW_D", "ansyslmd", "orglab", "saltd"], "rg_list": ["EDC", "MMA", "NFED", "Unknown", "RMT", "(OLD)EDC", "EIRG", "APT", "ENV", "LCRG", "TSMA", "BMD", "IRM", "CCM", "USAM"]}, "2026": {"total_hours": 51523.77, "total_sessions": 16436, "unique_users": 75, "unique_sw": 7, "by_software": [{"software": "ansyslmd", "hours": 20667.56, "sessions": 4005}, {"software": "saltd", "hours": 18696.98, "sessions": 3920}, {"software": "HPW", "hours": 7048.18, "sessions": 3513}, {"software": "MLM", "hours": 1797.87, "sessions": 465}, {"software": "orglab", "hours": 1649.69, "sessions": 2765}, {"software": "SW_D", "hours": 1629.5, "sessions": 1345}, {"software": "MSC", "hours": 33.99, "sessions": 423}], "by_rg": [{"rg": "EDC", "hours": 26187.82, "sessions": 5242}, {"rg": "MMA", "hours": 12756.32, "sessions": 6580}, {"rg": "NFED", "hours": 5894.2, "sessions": 625}, {"rg": "Unknown", "hours": 2683.2, "sessions": 897}, {"rg": "RMT", "hours": 2427.57, "sessions": 432}, {"rg": "EIRG", "hours": 1039.19, "sessions": 1491}, {"rg": "APT", "hours": 276.24, "sessions": 453}, {"rg": "TSMA", "hours": 193.04, "sessions": 642}, {"rg": "LCRG", "hours": 28.62, "sessions": 42}, {"rg": "CCM", "hours": 15.18, "sessions": 4}, {"rg": "BMD", "hours": 11.65, "sessions": 14}, {"rg": "ENV", "hours": 10.71, "sessions": 10}, {"rg": "TIIS", "hours": 0.03, "sessions": 4}], "by_month": [{"month": "2026-01", "hours": 6353.41, "label": "01/26"}, {"month": "2026-02", "hours": 5281.07, "label": "02/26"}, {"month": "2026-03", "hours": 10414.28, "label": "03/26"}, {"month": "2026-04", "hours": 5382.21, "label": "04/26"}, {"month": "2026-05", "hours": 4742.9, "label": "05/26"}, {"month": "2026-06", "hours": 5852.11, "label": "06/26"}, {"month": "2026-07", "hours": 2526.17, "label": "07/26"}, {"month": "2026-08", "hours": 5242.35, "label": "08/26"}, {"month": "2026-09", "hours": 5729.27, "label": "09/26"}], "sw_rg": {"APT": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 35.97, "ansyslmd": 0.0, "orglab": 240.27, "saltd": 0.0}, "BMD": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 7.21, "ansyslmd": 0.0, "orglab": 4.44, "saltd": 0.0}, "CCM": {"HPW": 0.0, "MLM": 11.28, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 3.9, "saltd": 0.0}, "EDC": {"HPW": 16.29, "MLM": 383.07, "MSC": 0.0, "SW_D": 1143.62, "ansyslmd": 20665.31, "orglab": 1.04, "saltd": 3978.49}, "EIRG": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 1039.19, "saltd": 0.0}, "ENV": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 10.71, "saltd": 0.0}, "LCRG": {"HPW": 0.0, "MLM": 14.39, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 14.23, "saltd": 0.0}, "MMA": {"HPW": 4748.47, "MLM": 0.0, "MSC": 33.99, "SW_D": 185.74, "ansyslmd": 2.18, "orglab": 0.02, "saltd": 7785.92}, "NFED": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.0, "saltd": 5894.2}, "RMT": {"HPW": 0.0, "MLM": 1389.13, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.09, "saltd": 1038.35}, "TIIS": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 0.03, "saltd": 0.0}, "TSMA": {"HPW": 0.0, "MLM": 0.0, "MSC": 0.0, "SW_D": 0.0, "ansyslmd": 0.0, "orglab": 193.04, "saltd": 0.0}, "Unknown": {"HPW": 2283.42, "MLM": 0.0, "MSC": 0.0, "SW_D": 256.96, "ansyslmd": 0.07, "orglab": 142.73, "saltd": 0.02}}, "top_users": [{"name": "พีชเรขา ด้วงสงค์", "rg": "EDC", "hours": 19184.55, "sessions": 3573}, {"name": "ดำรงค์ ถนอมจิตร", "rg": "MMA", "hours": 7053.82, "sessions": 2137}, {"name": "วัชรากร สุศิวะ", "rg": "NFED", "hours": 5869.0, "sessions": 610}, {"name": "ปิยมาภรณ์ อุตมัง", "rg": "MMA", "hours": 4216.54, "sessions": 2279}, {"name": "ณรงค์ พิทักษ์ทรัพย์สิน", "rg": "EDC", "hours": 3827.54, "sessions": 126}, {"name": "Unknown", "rg": "Unknown", "hours": 2683.2, "sessions": 897}, {"name": "ไพบูลย์ วัฒนพรภัณฑ์", "rg": "RMT", "hours": 1038.35, "sessions": 99}, {"name": "อธิพงษ์ มาลาทิพย์", "rg": "EDC", "hours": 1002.7, "sessions": 79}, {"name": "วรรษมน ภู่สกุลขจร", "rg": "RMT", "hours": 910.77, "sessions": 258}, {"name": "เอกชัย กิติแก้วทวีเสริฐ", "rg": "MMA", "hours": 729.47, "sessions": 802}, {"name": "ประพันธ์ ปัญญาวัน", "rg": "MMA", "hours": 534.56, "sessions": 756}, {"name": "ประสิทธิ์ วัฒนวงศ์สกุล", "rg": "EDC", "hours": 491.65, "sessions": 277}, {"name": "ปราโมทย์ คูวัฒนสุชาติ", "rg": "RMT", "hours": 457.22, "sessions": 63}, {"name": "ธนรรค อุทกะพันธ์", "rg": "EDC", "hours": 379.38, "sessions": 102}, {"name": "ยศกร ประทุมวัลย์", "rg": "EDC", "hours": 306.84, "sessions": 91}, {"name": "วิธวัช ทัพสวัสดิ์", "rg": "EDC", "hours": 287.39, "sessions": 181}, {"name": "ภัทรหทัย ยศปัญญา", "rg": "EDC", "hours": 284.9, "sessions": 281}, {"name": "นฤมล อภิญญากุล", "rg": "EIRG", "hours": 269.59, "sessions": 514}, {"name": "เขมชาติ รื่นเริงฤทธิ์", "rg": "EIRG", "hours": 205.22, "sessions": 261}, {"name": "พศวรรธน์ ชัยวุฒินันท์", "rg": "TSMA", "hours": 193.04, "sessions": 642}], "by_center": {"CO": 5894.2, "ENTEC": 1067.81, "MTEC": 41878.56, "Unknown": 2683.2}, "sw_list": ["HPW", "MLM", "MSC", "SW_D", "ansyslmd", "orglab", "saltd"], "rg_list": ["EDC", "MMA", "NFED", "Unknown", "RMT", "EIRG", "APT", "TSMA", "LCRG", "CCM", "BMD", "ENV", "TIIS"]}, "meta": {"years": [2025, 2026], "softwares": ["HPW", "MLM", "MSC", "SW_D", "ansyslmd", "orglab", "saltd"], "rgs": ["(OLD)EDC", "APT", "BMD", "CCM", "EDC", "EIRG", "ENV", "IRM", "LCRG", "MMA", "NFED", "RMT", "TIIS", "TSMA", "USAM", "Unknown"], "centers": ["CO", "ENTEC", "MTEC", "Unknown"], "rts": ["(OLD)AEST", "(OLD)DVTT", "AEST", "APMT", "ARPST", "BDT", "BMS", "CAET", "CFCT", "DVTT", "EDC", "ESTT", "FMAT", "FMIT", "FMT", "FOMT", "IODMT", "LWET", "MCDT", "NFED", "PMPT", "PPDT", "RENT", "SAMT", "SCMT", "SMAT", "SSET", "TETT", "Unknown", "WEST", "WLDT"]}, "table": [{"year": 2025, "month": "2025-11", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 5441.65, "sessions": 10}, {"year": 2026, "month": "2026-04", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 3329.84, "sessions": 350}, {"year": 2025, "month": "2025-10", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 3142.3, "sessions": 264}, {"year": 2026, "month": "2026-01", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 2772.08, "sessions": 264}, {"year": 2026, "month": "2026-03", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 2703.06, "sessions": 629}, {"year": 2025, "month": "2025-09", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 2645.68, "sessions": 394}, {"year": 2026, "month": "2026-08", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 2454.04, "sessions": 317}, {"year": 2026, "month": "2026-03", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 2444.24, "sessions": 90}, {"year": 2026, "month": "2026-09", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 2362.71, "sessions": 285}, {"year": 2025, "month": "2025-09", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 2171.24, "sessions": 429}, {"year": 2026, "month": "2026-03", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 2162.11, "sessions": 7}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 2153.82, "sessions": 79}, {"year": 2026, "month": "2026-02", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 2145.51, "sessions": 350}, {"year": 2025, "month": "2025-07", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 2020.48, "sessions": 24}, {"year": 2025, "month": "2025-11", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 1971.42, "sessions": 247}, {"year": 2026, "month": "2026-06", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 1847.42, "sessions": 231}, {"year": 2025, "month": "2025-11", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 1818.9, "sessions": 195}, {"year": 2025, "month": "2025-12", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 1720.87, "sessions": 162}, {"year": 2026, "month": "2026-01", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 1644.12, "sessions": 4}, {"year": 2026, "month": "2026-06", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 1608.12, "sessions": 594}, {"year": 2026, "month": "2026-03", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 1601.09, "sessions": 50}, {"year": 2025, "month": "2025-09", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 1465.3, "sessions": 11}, {"year": 2025, "month": "2025-08", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 1373.98, "sessions": 310}, {"year": 2026, "month": "2026-02", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 1232.2, "sessions": 153}, {"year": 2026, "month": "2026-09", "software": "ansyslmd", "rg": "EDC", "user": "อธิพงษ์ มาลาทิพย์", "hours": 1002.7, "sessions": 79}, {"year": 2026, "month": "2026-09", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 997.76, "sessions": 72}, {"year": 2025, "month": "2025-11", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 980.26, "sessions": 292}, {"year": 2026, "month": "2026-08", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 970.6, "sessions": 618}, {"year": 2026, "month": "2026-07", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 955.65, "sessions": 389}, {"year": 2026, "month": "2026-04", "software": "saltd", "rg": "RMT", "user": "ไพบูลย์ วัฒนพรภัณฑ์", "hours": 871.12, "sessions": 50}, {"year": 2026, "month": "2026-05", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 853.54, "sessions": 395}, {"year": 2025, "month": "2025-07", "software": "ansyslmd", "rg": "EDC", "user": "พีชเรขา ด้วงสงค์", "hours": 794.89, "sessions": 138}, {"year": 2025, "month": "2025-12", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 793.33, "sessions": 196}, {"year": 2026, "month": "2026-08", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 776.22, "sessions": 307}, {"year": 2025, "month": "2025-08", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 747.43, "sessions": 78}, {"year": 2026, "month": "2026-06", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 742.28, "sessions": 658}, {"year": 2025, "month": "2025-11", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 738.99, "sessions": 91}, {"year": 2026, "month": "2026-05", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 719.2, "sessions": 258}, {"year": 2026, "month": "2026-02", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 576.15, "sessions": 184}, {"year": 2025, "month": "2025-12", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 568.97, "sessions": 142}, {"year": 2026, "month": "2026-06", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 563.45, "sessions": 357}, {"year": 2026, "month": "2026-01", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 537.59, "sessions": 78}, {"year": 2025, "month": "2025-07", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 517.4, "sessions": 36}, {"year": 2026, "month": "2026-01", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 507.71, "sessions": 310}, {"year": 2025, "month": "2025-11", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 505.22, "sessions": 33}, {"year": 2025, "month": "2025-07", "software": "ansyslmd", "rg": "(OLD)EDC", "user": "พชรพล สมณะ", "hours": 468.35, "sessions": 85}, {"year": 2025, "month": "2025-07", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 458.94, "sessions": 164}, {"year": 2026, "month": "2026-04", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 456.9, "sessions": 356}, {"year": 2026, "month": "2026-08", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 454.27, "sessions": 93}, {"year": 2025, "month": "2025-09", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 446.1, "sessions": 63}, {"year": 2025, "month": "2025-08", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 439.5, "sessions": 117}, {"year": 2025, "month": "2025-10", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 434.85, "sessions": 66}, {"year": 2025, "month": "2025-10", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 434.33, "sessions": 257}, {"year": 2026, "month": "2026-07", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 407.24, "sessions": 119}, {"year": 2026, "month": "2026-02", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 402.21, "sessions": 367}, {"year": 2025, "month": "2025-09", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 390.71, "sessions": 83}, {"year": 2025, "month": "2025-11", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 385.35, "sessions": 197}, {"year": 2025, "month": "2025-10", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 385.2, "sessions": 15}, {"year": 2025, "month": "2025-12", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 384.53, "sessions": 316}, {"year": 2026, "month": "2026-09", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 379.65, "sessions": 123}, {"year": 2025, "month": "2025-12", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 345.87, "sessions": 18}, {"year": 2025, "month": "2025-09", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 337.05, "sessions": 12}, {"year": 2026, "month": "2026-09", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 296.03, "sessions": 189}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 262.33, "sessions": 138}, {"year": 2026, "month": "2026-07", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 253.03, "sessions": 174}, {"year": 2026, "month": "2026-07", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 235.92, "sessions": 99}, {"year": 2025, "month": "2025-12", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 206.11, "sessions": 265}, {"year": 2026, "month": "2026-03", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 204.75, "sessions": 207}, {"year": 2026, "month": "2026-06", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 203.9, "sessions": 75}, {"year": 2025, "month": "2025-12", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 198.38, "sessions": 19}, {"year": 2026, "month": "2026-01", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 190.46, "sessions": 19}, {"year": 2025, "month": "2025-10", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 186.79, "sessions": 122}, {"year": 2026, "month": "2026-05", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 186.35, "sessions": 54}, {"year": 2026, "month": "2026-05", "software": "ansyslmd", "rg": "EDC", "user": "ยศกร ประทุมวัลย์", "hours": 181.51, "sessions": 21}, {"year": 2026, "month": "2026-01", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 170.43, "sessions": 51}, {"year": 2025, "month": "2025-08", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 167.38, "sessions": 103}, {"year": 2025, "month": "2025-07", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 166.93, "sessions": 4}, {"year": 2026, "month": "2026-03", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 162.81, "sessions": 26}, {"year": 2026, "month": "2026-03", "software": "saltd", "rg": "RMT", "user": "ไพบูลย์ วัฒนพรภัณฑ์", "hours": 162.76, "sessions": 34}, {"year": 2026, "month": "2026-08", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 161.73, "sessions": 38}, {"year": 2026, "month": "2026-03", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 160.55, "sessions": 90}, {"year": 2026, "month": "2026-06", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 149.53, "sessions": 19}, {"year": 2026, "month": "2026-06", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 147.71, "sessions": 41}, {"year": 2026, "month": "2026-08", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 147.59, "sessions": 129}, {"year": 2025, "month": "2025-12", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 145.56, "sessions": 24}, {"year": 2026, "month": "2026-02", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 140.16, "sessions": 54}, {"year": 2026, "month": "2026-03", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 135.6, "sessions": 132}, {"year": 2026, "month": "2026-09", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 132.47, "sessions": 80}, {"year": 2026, "month": "2026-01", "software": "HPW", "rg": "MMA", "user": "ปิยมาภรณ์ อุตมัง", "hours": 125.47, "sessions": 87}, {"year": 2025, "month": "2025-09", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 113.54, "sessions": 44}, {"year": 2026, "month": "2026-02", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 104.76, "sessions": 153}, {"year": 2026, "month": "2026-07", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 102.93, "sessions": 259}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "ภัทรหทัย ยศปัญญา", "hours": 96.98, "sessions": 86}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 95.07, "sessions": 32}, {"year": 2026, "month": "2026-06", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรหทัย ยศปัญญา", "hours": 94.65, "sessions": 106}, {"year": 2025, "month": "2025-10", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 84.78, "sessions": 156}, {"year": 2026, "month": "2026-07", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 81.93, "sessions": 90}, {"year": 2025, "month": "2025-10", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 81.81, "sessions": 19}, {"year": 2026, "month": "2026-07", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 79.77, "sessions": 21}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "EDC", "user": "เอนก ภู่จำนงค์", "hours": 79.25, "sessions": 120}, {"year": 2026, "month": "2026-09", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 78.46, "sessions": 17}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 77.74, "sessions": 40}, {"year": 2025, "month": "2025-09", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 77.18, "sessions": 18}, {"year": 2025, "month": "2025-11", "software": "MLM", "rg": "RMT", "user": "ณัฏฐกา ชิโนมี", "hours": 75.57, "sessions": 21}, {"year": 2025, "month": "2025-12", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 74.82, "sessions": 87}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 73.77, "sessions": 28}, {"year": 2026, "month": "2026-01", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 72.84, "sessions": 108}, {"year": 2026, "month": "2026-04", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 70.25, "sessions": 20}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 69.95, "sessions": 41}, {"year": 2026, "month": "2026-07", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 65.03, "sessions": 23}, {"year": 2026, "month": "2026-04", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 64.24, "sessions": 41}, {"year": 2026, "month": "2026-03", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 63.87, "sessions": 41}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 61.07, "sessions": 80}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "(OLD)EDC", "user": "พชรพล สมณะ", "hours": 59.63, "sessions": 32}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 59.48, "sessions": 94}, {"year": 2026, "month": "2026-09", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 59.46, "sessions": 15}, {"year": 2025, "month": "2025-07", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 58.57, "sessions": 34}, {"year": 2026, "month": "2026-04", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 58.17, "sessions": 102}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 57.97, "sessions": 47}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 56.9, "sessions": 50}, {"year": 2026, "month": "2026-04", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 56.12, "sessions": 8}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 55.32, "sessions": 52}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 53.52, "sessions": 40}, {"year": 2025, "month": "2025-11", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 53.49, "sessions": 64}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "EDC", "user": "ภัทรหทัย ยศปัญญา", "hours": 52.79, "sessions": 38}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 52.48, "sessions": 32}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 52.38, "sessions": 41}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 51.84, "sessions": 29}, {"year": 2025, "month": "2025-08", "software": "saltd", "rg": "MMA", "user": "ดำรงค์ ถนอมจิตร", "hours": 51.39, "sessions": 26}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 50.7, "sessions": 38}, {"year": 2026, "month": "2026-02", "software": "ansyslmd", "rg": "EDC", "user": "ยศกร ประทุมวัลย์", "hours": 49.69, "sessions": 22}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 48.3, "sessions": 18}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 47.64, "sessions": 33}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 47.63, "sessions": 203}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 47.55, "sessions": 63}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 47.29, "sessions": 49}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 46.64, "sessions": 41}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 45.66, "sessions": 169}, {"year": 2026, "month": "2026-06", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 45.6, "sessions": 90}, {"year": 2025, "month": "2025-09", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 44.93, "sessions": 28}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 44.65, "sessions": 26}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 44.19, "sessions": 22}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 43.81, "sessions": 62}, {"year": 2025, "month": "2025-08", "software": "saltd", "rg": "RMT", "user": "อรรถพล พลาศรัย", "hours": 42.97, "sessions": 68}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 42.89, "sessions": 80}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 42.63, "sessions": 32}, {"year": 2026, "month": "2026-02", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 42.53, "sessions": 2}, {"year": 2026, "month": "2026-04", "software": "ansyslmd", "rg": "EDC", "user": "ยศกร ประทุมวัลย์", "hours": 41.58, "sessions": 36}, {"year": 2025, "month": "2025-12", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 41.29, "sessions": 14}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "กชพร ทัศนจิตรกร", "hours": 40.8, "sessions": 29}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 40.55, "sessions": 26}, {"year": 2026, "month": "2026-07", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรหทัย ยศปัญญา", "hours": 40.48, "sessions": 51}, {"year": 2026, "month": "2026-09", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 39.67, "sessions": 127}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 39.03, "sessions": 44}, {"year": 2025, "month": "2025-11", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 38.29, "sessions": 12}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 37.96, "sessions": 22}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 37.87, "sessions": 150}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 36.87, "sessions": 28}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "APT", "user": "วาริช แสงชูติ", "hours": 36.51, "sessions": 39}, {"year": 2026, "month": "2026-04", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 36.15, "sessions": 12}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 35.84, "sessions": 50}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 35.79, "sessions": 21}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 34.93, "sessions": 24}, {"year": 2026, "month": "2026-01", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 34.35, "sessions": 21}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 34.28, "sessions": 18}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 34.23, "sessions": 73}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "(OLD)EDC", "user": "พอเพียง พึ่งภพ", "hours": 34.15, "sessions": 11}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 33.92, "sessions": 79}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 33.51, "sessions": 22}, {"year": 2026, "month": "2026-08", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 33.03, "sessions": 51}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 32.83, "sessions": 57}, {"year": 2026, "month": "2026-03", "software": "ansyslmd", "rg": "EDC", "user": "ยศกร ประทุมวัลย์", "hours": 32.83, "sessions": 9}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "APT", "user": "วาริช แสงชูติ", "hours": 32.81, "sessions": 35}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 32.39, "sessions": 75}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 32.37, "sessions": 55}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 32.03, "sessions": 41}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 31.96, "sessions": 27}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 31.07, "sessions": 32}, {"year": 2025, "month": "2025-12", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 30.85, "sessions": 23}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 30.04, "sessions": 44}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 29.84, "sessions": 40}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 29.69, "sessions": 27}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 29.51, "sessions": 17}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 29.07, "sessions": 79}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 29.06, "sessions": 31}, {"year": 2025, "month": "2025-12", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 28.77, "sessions": 12}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 28.59, "sessions": 19}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 28.21, "sessions": 29}, {"year": 2026, "month": "2026-04", "software": "MSC", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 27.76, "sessions": 359}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 27.35, "sessions": 32}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 27.27, "sessions": 19}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 26.99, "sessions": 15}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 26.74, "sessions": 33}, {"year": 2025, "month": "2025-09", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 26.33, "sessions": 93}, {"year": 2026, "month": "2026-04", "software": "HPW", "rg": "Unknown", "user": "Unknown", "hours": 26.31, "sessions": 12}, {"year": 2026, "month": "2026-03", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 26.12, "sessions": 12}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 26.01, "sessions": 25}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 25.96, "sessions": 45}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 25.16, "sessions": 16}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 24.44, "sessions": 33}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 24.37, "sessions": 40}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 24.29, "sessions": 10}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 24.19, "sessions": 43}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 23.98, "sessions": 15}, {"year": 2026, "month": "2026-05", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 23.71, "sessions": 10}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 23.7, "sessions": 31}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 23.61, "sessions": 18}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 23.26, "sessions": 15}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 23.19, "sessions": 14}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 23.15, "sessions": 31}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 23.13, "sessions": 36}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 22.98, "sessions": 90}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 22.9, "sessions": 12}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "กชพร ทัศนจิตรกร", "hours": 22.68, "sessions": 19}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 22.56, "sessions": 15}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 22.52, "sessions": 23}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 22.48, "sessions": 22}, {"year": 2025, "month": "2025-07", "software": "saltd", "rg": "RMT", "user": "ไพบูลย์ วัฒนพรภัณฑ์", "hours": 22.37, "sessions": 51}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 22.28, "sessions": 41}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 22.0, "sessions": 18}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 21.75, "sessions": 21}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 21.74, "sessions": 25}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 21.44, "sessions": 16}, {"year": 2026, "month": "2026-04", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 20.49, "sessions": 7}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 19.93, "sessions": 23}, {"year": 2025, "month": "2025-12", "software": "saltd", "rg": "NFED", "user": "วัชรากร สุศิวะ", "hours": 19.89, "sessions": 33}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 19.85, "sessions": 19}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 19.66, "sessions": 16}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 19.59, "sessions": 34}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 19.33, "sessions": 24}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 19.13, "sessions": 17}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 19.1, "sessions": 11}, {"year": 2025, "month": "2025-07", "software": "ansyslmd", "rg": "(OLD)EDC", "user": "พอเพียง พึ่งภพ", "hours": 18.84, "sessions": 39}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 18.73, "sessions": 15}, {"year": 2026, "month": "2026-07", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 18.72, "sessions": 76}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 18.46, "sessions": 24}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 18.44, "sessions": 26}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 18.37, "sessions": 9}, {"year": 2026, "month": "2026-09", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 18.34, "sessions": 32}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 18.32, "sessions": 62}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 18.26, "sessions": 7}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 17.51, "sessions": 35}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 16.84, "sessions": 13}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 16.83, "sessions": 10}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 16.74, "sessions": 13}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 16.47, "sessions": 60}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 16.4, "sessions": 32}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 16.25, "sessions": 36}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 16.08, "sessions": 24}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 15.77, "sessions": 13}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 15.67, "sessions": 17}, {"year": 2026, "month": "2026-01", "software": "saltd", "rg": "NFED", "user": "อดิศักดิ์ เนียมสำเภา", "hours": 14.73, "sessions": 6}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 14.6, "sessions": 16}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 14.48, "sessions": 17}, {"year": 2026, "month": "2026-09", "software": "MLM", "rg": "LCRG", "user": "ภูมิอานันท์ นิยมนา", "hours": 14.37, "sessions": 23}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 14.32, "sessions": 24}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 14.3, "sessions": 8}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 14.15, "sessions": 41}, {"year": 2025, "month": "2025-08", "software": "saltd", "rg": "RMT", "user": "ไพบูลย์ วัฒนพรภัณฑ์", "hours": 14.13, "sessions": 19}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 14.03, "sessions": 12}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 13.73, "sessions": 10}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 13.67, "sessions": 10}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "เปรียว เอี่ยมละมัย", "hours": 13.58, "sessions": 28}, {"year": 2025, "month": "2025-09", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 13.57, "sessions": 27}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 13.46, "sessions": 21}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 13.42, "sessions": 23}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 13.1, "sessions": 13}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 12.96, "sessions": 12}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "APT", "user": "วาริช แสงชูติ", "hours": 12.84, "sessions": 10}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 12.63, "sessions": 10}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 12.33, "sessions": 13}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 12.03, "sessions": 19}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 12.01, "sessions": 65}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 11.95, "sessions": 27}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 11.85, "sessions": 21}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "BMD", "user": "บุญล้อม ถาวรยุติการต์", "hours": 11.8, "sessions": 19}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 11.64, "sessions": 8}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 11.55, "sessions": 10}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 11.43, "sessions": 11}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 11.28, "sessions": 16}, {"year": 2026, "month": "2026-06", "software": "MLM", "rg": "CCM", "user": "ประภัสสร นำเกียรติสกุล", "hours": 11.28, "sessions": 3}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 11.25, "sessions": 6}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 11.15, "sessions": 9}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 11.09, "sessions": 10}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 11.06, "sessions": 6}, {"year": 2026, "month": "2026-03", "software": "MLM", "rg": "RMT", "user": "ณัฏฐกา ชิโนมี", "hours": 10.98, "sessions": 4}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 10.85, "sessions": 10}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 10.79, "sessions": 5}, {"year": 2026, "month": "2026-02", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 10.58, "sessions": 7}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 10.56, "sessions": 6}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "NFED", "user": "อดิศักดิ์ เนียมสำเภา", "hours": 10.45, "sessions": 7}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 10.4, "sessions": 4}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 10.36, "sessions": 14}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "LCRG", "user": "ปานชีวา อุดมทรัพย์", "hours": 10.33, "sessions": 8}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "LCRG", "user": "ชัยยุทธ แซ่กัง", "hours": 10.3, "sessions": 7}, {"year": 2026, "month": "2026-04", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 10.23, "sessions": 9}, {"year": 2026, "month": "2026-08", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 10.2, "sessions": 3}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 10.17, "sessions": 26}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 10.12, "sessions": 9}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 9.99, "sessions": 13}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 9.91, "sessions": 17}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "IRM", "user": "ชุติมา แซ่เฮง", "hours": 9.89, "sessions": 10}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 9.48, "sessions": 12}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 9.38, "sessions": 7}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 9.04, "sessions": 9}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 8.9, "sessions": 5}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "LCRG", "user": "ปานชีวา อุดมทรัพย์", "hours": 8.88, "sessions": 17}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 8.83, "sessions": 8}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 8.63, "sessions": 9}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 8.49, "sessions": 25}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 8.37, "sessions": 22}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 8.37, "sessions": 4}, {"year": 2025, "month": "2025-09", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 8.32, "sessions": 5}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 8.3, "sessions": 8}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 8.21, "sessions": 8}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 8.2, "sessions": 10}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 8.14, "sessions": 42}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 8.13, "sessions": 5}, {"year": 2026, "month": "2026-01", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 8.11, "sessions": 3}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 8.07, "sessions": 16}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 8.0, "sessions": 7}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 7.97, "sessions": 14}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 7.94, "sessions": 21}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 7.92, "sessions": 4}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "Unknown", "user": "Unknown", "hours": 7.81, "sessions": 10}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 7.56, "sessions": 5}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 7.48, "sessions": 4}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 7.44, "sessions": 7}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 7.44, "sessions": 12}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 7.43, "sessions": 4}, {"year": 2025, "month": "2025-09", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 7.39, "sessions": 6}, {"year": 2025, "month": "2025-12", "software": "MLM", "rg": "EDC", "user": "สิทธิกร ลาภาพงศ์", "hours": 7.32, "sessions": 3}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 7.28, "sessions": 16}, {"year": 2025, "month": "2025-09", "software": "SW_D", "rg": "EDC", "user": "วิธวัช ทัพสวัสดิ์", "hours": 7.26, "sessions": 5}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 6.81, "sessions": 7}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "นฤมล อภิญญากุล", "hours": 6.71, "sessions": 15}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "LCRG", "user": "ปานชีวา อุดมทรัพย์", "hours": 6.6, "sessions": 5}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 6.52, "sessions": 4}, {"year": 2026, "month": "2026-03", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 6.49, "sessions": 17}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 6.45, "sessions": 15}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 6.42, "sessions": 8}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "LCRG", "user": "ปานชีวา อุดมทรัพย์", "hours": 6.3, "sessions": 6}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "BMD", "user": "นัฐดนัย นามภิชัย", "hours": 6.28, "sessions": 7}, {"year": 2026, "month": "2026-02", "software": "MSC", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 6.22, "sessions": 63}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 6.16, "sessions": 6}, {"year": 2025, "month": "2025-11", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 6.13, "sessions": 4}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 6.08, "sessions": 8}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 6.07, "sessions": 5}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 5.93, "sessions": 16}, {"year": 2025, "month": "2025-07", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 5.88, "sessions": 6}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EDC", "user": "ศิวพร ศรีมงคล", "hours": 5.81, "sessions": 3}, {"year": 2026, "month": "2026-02", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 5.81, "sessions": 4}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 5.79, "sessions": 3}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 5.78, "sessions": 3}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "LCRG", "user": "พรภัสสร เสน่ห์นพกุล", "hours": 5.6, "sessions": 6}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "กฤษฎา ท่าพระเจริญ", "hours": 5.59, "sessions": 2}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 5.57, "sessions": 7}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 5.53, "sessions": 4}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 5.51, "sessions": 4}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 5.49, "sessions": 7}, {"year": 2025, "month": "2025-08", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 5.49, "sessions": 2}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 5.48, "sessions": 13}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 5.43, "sessions": 7}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 5.34, "sessions": 5}, {"year": 2025, "month": "2025-12", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 5.33, "sessions": 9}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "เปรียว เอี่ยมละมัย", "hours": 5.29, "sessions": 12}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 5.27, "sessions": 3}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 5.26, "sessions": 3}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 5.23, "sessions": 18}, {"year": 2025, "month": "2025-08", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 5.22, "sessions": 1}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 5.21, "sessions": 4}, {"year": 2026, "month": "2026-07", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 5.13, "sessions": 17}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 5.1, "sessions": 4}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "EDC", "user": "เอนก ภู่จำนงค์", "hours": 5.1, "sessions": 6}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 4.99, "sessions": 3}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 4.92, "sessions": 4}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 4.92, "sessions": 4}, {"year": 2026, "month": "2026-08", "software": "MLM", "rg": "RMT", "user": "ณัฏฐกา ชิโนมี", "hours": 4.88, "sessions": 3}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "TSMA", "user": "พศวรรธน์ ชัยวุฒินันท์", "hours": 4.83, "sessions": 5}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 4.78, "sessions": 6}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 4.76, "sessions": 2}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 4.73, "sessions": 2}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 4.7, "sessions": 8}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 4.69, "sessions": 5}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 4.63, "sessions": 3}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "LCRG", "user": "ชัยยุทธ แซ่กัง", "hours": 4.63, "sessions": 2}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 4.49, "sessions": 3}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "กชพร ทัศนจิตรกร", "hours": 4.47, "sessions": 3}, {"year": 2026, "month": "2026-04", "software": "MLM", "rg": "RMT", "user": "ณัฏฐกา ชิโนมี", "hours": 4.47, "sessions": 3}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 4.34, "sessions": 4}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "(OLD)EDC", "user": "ณรงค์ฤทธิ์ สืบนันตา", "hours": 4.27, "sessions": 6}, {"year": 2025, "month": "2025-11", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 4.24, "sessions": 6}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 4.21, "sessions": 9}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "BMD", "user": "บุญล้อม ถาวรยุติการต์", "hours": 4.13, "sessions": 3}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 4.13, "sessions": 2}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 4.12, "sessions": 2}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 4.1, "sessions": 8}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "APT", "user": "วาริช แสงชูติ", "hours": 4.08, "sessions": 4}, {"year": 2026, "month": "2026-06", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 4.05, "sessions": 3}, {"year": 2025, "month": "2025-09", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 4.0, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 3.98, "sessions": 5}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "CCM", "user": "ประภัสสร นำเกียรติสกุล", "hours": 3.9, "sessions": 1}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 3.9, "sessions": 6}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 3.86, "sessions": 2}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "IRM", "user": "ชุติมา แซ่เฮง", "hours": 3.73, "sessions": 8}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 3.73, "sessions": 2}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "เขมชาติ รื่นเริงฤทธิ์", "hours": 3.71, "sessions": 2}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 3.7, "sessions": 10}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "ENV", "user": "บราลี ชยสมบัติ", "hours": 3.66, "sessions": 2}, {"year": 2026, "month": "2026-02", "software": "MLM", "rg": "EDC", "user": "สิทธิกร ลาภาพงศ์", "hours": 3.63, "sessions": 3}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 3.62, "sessions": 4}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "LCRG", "user": "สารีน่า หมัดหมาน", "hours": 3.59, "sessions": 4}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 3.54, "sessions": 10}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 3.52, "sessions": 6}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 3.47, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 3.41, "sessions": 4}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 3.4, "sessions": 7}, {"year": 2026, "month": "2026-06", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 3.38, "sessions": 30}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "BMD", "user": "บุญล้อม ถาวรยุติการต์", "hours": 3.36, "sessions": 5}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 3.36, "sessions": 9}, {"year": 2026, "month": "2026-01", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 3.35, "sessions": 9}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 3.26, "sessions": 4}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 3.25, "sessions": 6}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 3.2, "sessions": 11}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 3.12, "sessions": 5}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "เปรียว เอี่ยมละมัย", "hours": 3.1, "sessions": 6}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "เปรียว เอี่ยมละมัย", "hours": 3.03, "sessions": 10}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 3.02, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 2.98, "sessions": 6}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 2.96, "sessions": 3}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "IRM", "user": "ชุติมา แซ่เฮง", "hours": 2.93, "sessions": 4}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "EDC", "user": "เปรม สุขสมแดน", "hours": 2.93, "sessions": 8}, {"year": 2025, "month": "2025-09", "software": "saltd", "rg": "NFED", "user": "อดิศักดิ์ เนียมสำเภา", "hours": 2.85, "sessions": 9}, {"year": 2026, "month": "2026-05", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 2.84, "sessions": 1}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "ปริมล ทิพยมาลี", "hours": 2.82, "sessions": 9}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 2.77, "sessions": 1}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 2.76, "sessions": 3}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 2.76, "sessions": 2}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 2.74, "sessions": 2}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "BMD", "user": "บุญล้อม ถาวรยุติการต์", "hours": 2.7, "sessions": 10}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 2.69, "sessions": 3}, {"year": 2026, "month": "2026-07", "software": "saltd", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 2.61, "sessions": 27}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 2.59, "sessions": 1}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 2.54, "sessions": 9}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "EIRG", "user": "เปรียว เอี่ยมละมัย", "hours": 2.47, "sessions": 4}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 2.46, "sessions": 3}, {"year": 2025, "month": "2025-09", "software": "SW_D", "rg": "EDC", "user": "สรยศ ชินกาญจนโรจน์", "hours": 2.42, "sessions": 1}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 2.4, "sessions": 4}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 2.39, "sessions": 8}, {"year": 2026, "month": "2026-04", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 2.37, "sessions": 3}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 2.35, "sessions": 7}, {"year": 2026, "month": "2026-02", "software": "saltd", "rg": "RMT", "user": "ไพบูลย์ วัฒนพรภัณฑ์", "hours": 2.35, "sessions": 3}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 2.3, "sessions": 3}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EDC", "user": "ศิวพร ศรีมงคล", "hours": 2.3, "sessions": 1}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "EIRG", "user": "อุกฤษฎ์ สหพัฒน์สมบัติ", "hours": 2.25, "sessions": 3}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "ENV", "user": "บราลี ชยสมบัติ", "hours": 2.25, "sessions": 2}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 2.19, "sessions": 3}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 2.15, "sessions": 12}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "LCRG", "user": "พรประภา พิทักษ์จักรพิภพ", "hours": 2.15, "sessions": 3}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 2.13, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "RMT", "user": "ไพบูลย์ วัฒนพรภัณฑ์", "hours": 2.12, "sessions": 12}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 2.12, "sessions": 7}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 2.08, "sessions": 2}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "LCRG", "user": "ชัยยุทธ แซ่กัง", "hours": 2.03, "sessions": 1}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "LCRG", "user": "ชัยยุทธ แซ่กัง", "hours": 2.03, "sessions": 1}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "LCRG", "user": "พรประภา พิทักษ์จักรพิภพ", "hours": 1.87, "sessions": 3}, {"year": 2026, "month": "2026-09", "software": "SW_D", "rg": "EDC", "user": "มนัสนันท์ แสงเพ็ญฉาย", "hours": 1.82, "sessions": 1}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 1.8, "sessions": 46}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 1.72, "sessions": 2}, {"year": 2025, "month": "2025-07", "software": "saltd", "rg": "RMT", "user": "อรรถพล พลาศรัย", "hours": 1.56, "sessions": 5}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 1.55, "sessions": 1}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EDC", "user": "ศิวพร ศรีมงคล", "hours": 1.53, "sessions": 1}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 1.51, "sessions": 1}, {"year": 2026, "month": "2026-08", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 1.49, "sessions": 13}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 1.48, "sessions": 2}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "CCM", "user": "ประภัสสร นำเกียรติสกุล", "hours": 1.47, "sessions": 4}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "อุกฤษฎ์ สหพัฒน์สมบัติ", "hours": 1.45, "sessions": 3}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "APT", "user": "วรรณี วาสุเทพ", "hours": 1.44, "sessions": 5}, {"year": 2025, "month": "2025-09", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 1.44, "sessions": 2}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 1.42, "sessions": 4}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "EDC", "user": "ศศิธร ศรีสวัสดิ์", "hours": 1.31, "sessions": 1}, {"year": 2026, "month": "2026-08", "software": "SW_D", "rg": "EDC", "user": "กฤษฎา ท่าพระเจริญ", "hours": 1.28, "sessions": 2}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "APT", "user": "วาริช แสงชูติ", "hours": 1.27, "sessions": 6}, {"year": 2026, "month": "2026-01", "software": "ansyslmd", "rg": "MMA", "user": "Reza Gholami", "hours": 1.25, "sessions": 2}, {"year": 2026, "month": "2026-01", "software": "ansyslmd", "rg": "EDC", "user": "ยศกร ประทุมวัลย์", "hours": 1.23, "sessions": 3}, {"year": 2026, "month": "2026-07", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 1.23, "sessions": 4}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 1.22, "sessions": 21}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 1.2, "sessions": 1}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 1.19, "sessions": 5}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "MMA", "user": "Reza Gholami", "hours": 1.19, "sessions": 2}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 1.12, "sessions": 3}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 1.09, "sessions": 14}, {"year": 2026, "month": "2026-06", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 1.07, "sessions": 22}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 1.05, "sessions": 1}, {"year": 2025, "month": "2025-07", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 1.05, "sessions": 9}, {"year": 2025, "month": "2025-12", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 1.05, "sessions": 2}, {"year": 2025, "month": "2025-08", "software": "SW_D", "rg": "MMA", "user": "พงษ์ศักดิ์ วิลา", "hours": 1.05, "sessions": 2}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "ฝนทิพย์ ธรรมวัฒน์", "hours": 0.95, "sessions": 3}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "BMD", "user": "นัฐดนัย นามภิชัย", "hours": 0.91, "sessions": 1}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "LCRG", "user": "สารีน่า หมัดหมาน", "hours": 0.91, "sessions": 3}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 0.89, "sessions": 4}, {"year": 2026, "month": "2026-03", "software": "SW_D", "rg": "BMD", "user": "นัฐดนัย นามภิชัย", "hours": 0.88, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 0.82, "sessions": 7}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 0.81, "sessions": 3}, {"year": 2026, "month": "2026-09", "software": "MLM", "rg": "RMT", "user": "ณัฏฐกา ชิโนมี", "hours": 0.81, "sessions": 1}, {"year": 2026, "month": "2026-08", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 0.79, "sessions": 11}, {"year": 2025, "month": "2025-10", "software": "saltd", "rg": "Unknown", "user": "Unknown", "hours": 0.79, "sessions": 1}, {"year": 2026, "month": "2026-03", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 0.78, "sessions": 5}, {"year": 2025, "month": "2025-10", "software": "SW_D", "rg": "EDC", "user": "ธีระพงษ์ บุญมา", "hours": 0.78, "sessions": 2}, {"year": 2026, "month": "2026-08", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 0.72, "sessions": 4}, {"year": 2026, "month": "2026-07", "software": "SW_D", "rg": "EDC", "user": "ศศิธร ศรีสวัสดิ์", "hours": 0.72, "sessions": 3}, {"year": 2026, "month": "2026-08", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 0.69, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "ansyslmd", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 0.66, "sessions": 4}, {"year": 2025, "month": "2025-10", "software": "ansyslmd", "rg": "EDC", "user": "อธิพงษ์ มาลาทิพย์", "hours": 0.64, "sessions": 8}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "MMA", "user": "Reza Gholami", "hours": 0.63, "sessions": 1}, {"year": 2025, "month": "2025-08", "software": "orglab", "rg": "EIRG", "user": "พรรณพนัช เทศัชบุตร", "hours": 0.63, "sessions": 4}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "EIRG", "user": "ธนทร ศรีสุข", "hours": 0.61, "sessions": 33}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "EDC", "user": "คิรากร ปานสินธ์", "hours": 0.6, "sessions": 2}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 0.57, "sessions": 3}, {"year": 2025, "month": "2025-08", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 0.56, "sessions": 1}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EDC", "user": "ศิวพร ศรีมงคล", "hours": 0.53, "sessions": 2}, {"year": 2026, "month": "2026-05", "software": "orglab", "rg": "EDC", "user": "ศิวพร ศรีมงคล", "hours": 0.51, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "MMA", "user": "Reza Gholami", "hours": 0.5, "sessions": 1}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "APT", "user": "ธนศาสตร์ สุขศรีเมือง", "hours": 0.5, "sessions": 2}, {"year": 2026, "month": "2026-02", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 0.46, "sessions": 9}, {"year": 2025, "month": "2025-07", "software": "SW_D", "rg": "APT", "user": "วัฒนา กลิ่นสุคนธ์", "hours": 0.46, "sessions": 2}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 0.42, "sessions": 1}, {"year": 2026, "month": "2026-07", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 0.41, "sessions": 3}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 0.41, "sessions": 4}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 0.4, "sessions": 2}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 0.39, "sessions": 1}, {"year": 2025, "month": "2025-10", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 0.35, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "MLM", "rg": "RMT", "user": "วรรษมน ภู่สกุลขจร", "hours": 0.33, "sessions": 1}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "BMD", "user": "บุญล้อม ถาวรยุติการต์", "hours": 0.31, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 0.3, "sessions": 5}, {"year": 2025, "month": "2025-10", "software": "HPW", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 0.27, "sessions": 3}, {"year": 2026, "month": "2026-03", "software": "HPW", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 0.25, "sessions": 3}, {"year": 2026, "month": "2026-05", "software": "ansyslmd", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 0.23, "sessions": 7}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 0.23, "sessions": 1}, {"year": 2026, "month": "2026-06", "software": "SW_D", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 0.22, "sessions": 2}, {"year": 2025, "month": "2025-11", "software": "ansyslmd", "rg": "EDC", "user": "อธิพงษ์ มาลาทิพย์", "hours": 0.22, "sessions": 1}, {"year": 2026, "month": "2026-08", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 0.21, "sessions": 4}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "EDC", "user": "ภณิดา เบ็ญยะมาตร", "hours": 0.17, "sessions": 1}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 0.16, "sessions": 5}, {"year": 2026, "month": "2026-01", "software": "SW_D", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 0.15, "sessions": 5}, {"year": 2025, "month": "2025-11", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 0.15, "sessions": 2}, {"year": 2025, "month": "2025-07", "software": "saltd", "rg": "MMA", "user": "เอกชัย กิติแก้วทวีเสริฐ", "hours": 0.15, "sessions": 2}, {"year": 2026, "month": "2026-06", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 0.15, "sessions": 3}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "อดิศักดิ์ พรมวิชา", "hours": 0.14, "sessions": 1}, {"year": 2025, "month": "2025-09", "software": "ansyslmd", "rg": "Unknown", "user": "Unknown", "hours": 0.13, "sessions": 4}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "APT", "user": "วราภรณ์ ปานจันทร์", "hours": 0.13, "sessions": 1}, {"year": 2026, "month": "2026-01", "software": "orglab", "rg": "LCRG", "user": "ปานชีวา อุดมทรัพย์", "hours": 0.13, "sessions": 1}, {"year": 2025, "month": "2025-07", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 0.12, "sessions": 9}, {"year": 2026, "month": "2026-06", "software": "orglab", "rg": "LCRG", "user": "พรประภา พิทักษ์จักรพิภพ", "hours": 0.11, "sessions": 3}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "RMT", "user": "กีรติ วารี", "hours": 0.09, "sessions": 1}, {"year": 2025, "month": "2025-10", "software": "ansyslmd", "rg": "USAM", "user": "เอกรินทร์ อัญมณีเจริญ", "hours": 0.08, "sessions": 1}, {"year": 2025, "month": "2025-10", "software": "ansyslmd", "rg": "Unknown", "user": "Unknown", "hours": 0.07, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "ansyslmd", "rg": "Unknown", "user": "Unknown", "hours": 0.07, "sessions": 6}, {"year": 2026, "month": "2026-02", "software": "saltd", "rg": "EDC", "user": "ประสิทธิ์ วัฒนวงศ์สกุล", "hours": 0.06, "sessions": 4}, {"year": 2026, "month": "2026-01", "software": "MLM", "rg": "EDC", "user": "สิทธิกร ลาภาพงศ์", "hours": 0.06, "sessions": 1}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "LCRG", "user": "พรพงษ์ ศิริรัตน์สกุล", "hours": 0.06, "sessions": 1}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "Unknown", "user": "Unknown", "hours": 0.06, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 0.05, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "BMD", "user": "นัฐดนัย นามภิชัย", "hours": 0.04, "sessions": 1}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "EIRG", "user": "ปณิดา ม่วงเกษม", "hours": 0.04, "sessions": 4}, {"year": 2025, "month": "2025-08", "software": "ansyslmd", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 0.04, "sessions": 1}, {"year": 2026, "month": "2026-03", "software": "ansyslmd", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 0.04, "sessions": 2}, {"year": 2025, "month": "2025-09", "software": "orglab", "rg": "LCRG", "user": "พรประภา พิทักษ์จักรพิภพ", "hours": 0.03, "sessions": 4}, {"year": 2025, "month": "2025-09", "software": "saltd", "rg": "Unknown", "user": "Unknown", "hours": 0.03, "sessions": 1}, {"year": 2025, "month": "2025-07", "software": "ansyslmd", "rg": "EDC", "user": "วิจิตรา เสริมจันทร์", "hours": 0.03, "sessions": 3}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "TIIS", "user": "ฤทัย อ่อนพุทธา", "hours": 0.03, "sessions": 4}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 0.02, "sessions": 3}, {"year": 2026, "month": "2026-06", "software": "saltd", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 0.02, "sessions": 3}, {"year": 2026, "month": "2026-09", "software": "saltd", "rg": "NFED", "user": "อดิศักดิ์ เนียมสำเภา", "hours": 0.02, "sessions": 2}, {"year": 2026, "month": "2026-07", "software": "MLM", "rg": "LCRG", "user": "ภูมิอานันท์ นิยมนา", "hours": 0.02, "sessions": 1}, {"year": 2026, "month": "2026-09", "software": "MLM", "rg": "RMT", "user": "ปราโมทย์ คูวัฒนสุชาติ", "hours": 0.02, "sessions": 1}, {"year": 2026, "month": "2026-04", "software": "SW_D", "rg": "EDC", "user": "เสฏฐวรรธ สุจริตภวัตสกุล", "hours": 0.02, "sessions": 1}, {"year": 2025, "month": "2025-12", "software": "MLM", "rg": "EDC", "user": "ธนรรค อุทกะพันธ์", "hours": 0.02, "sessions": 1}, {"year": 2026, "month": "2026-03", "software": "orglab", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 0.02, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "Unknown", "user": "Unknown", "hours": 0.02, "sessions": 2}, {"year": 2025, "month": "2025-12", "software": "orglab", "rg": "APT", "user": "เอกพงษ์ คงเจริญ", "hours": 0.01, "sessions": 2}, {"year": 2026, "month": "2026-03", "software": "MSC", "rg": "MMA", "user": "มานะ พลบุญ", "hours": 0.01, "sessions": 1}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "MMA", "user": "กาญจนาวดี สิงขรอาจ", "hours": 0.01, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "saltd", "rg": "EDC", "user": "สรยศ ชินกาญจนโรจน์", "hours": 0.01, "sessions": 1}, {"year": 2025, "month": "2025-08", "software": "saltd", "rg": "MMA", "user": "ประพันธ์ ปัญญาวัน", "hours": 0.01, "sessions": 3}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 0.01, "sessions": 1}, {"year": 2026, "month": "2026-02", "software": "SW_D", "rg": "BMD", "user": "นัฐดนัย นามภิชัย", "hours": 0.01, "sessions": 1}, {"year": 2026, "month": "2026-09", "software": "saltd", "rg": "EDC", "user": "ณรงค์ พิทักษ์ทรัพย์สิน", "hours": 0.01, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "saltd", "rg": "EDC", "user": "ภัทรพงศ์ ชูปัญญา", "hours": 0.01, "sessions": 4}, {"year": 2025, "month": "2025-07", "software": "orglab", "rg": "LCRG", "user": "พรประภา พิทักษ์จักรพิภพ", "hours": 0.0, "sessions": 1}, {"year": 2026, "month": "2026-09", "software": "orglab", "rg": "ENV", "user": "อังคณา ผ่องผุด", "hours": 0.0, "sessions": 1}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "ณัฐนัย คุณานุสนธิ์", "hours": 0.0, "sessions": 1}, {"year": 2025, "month": "2025-12", "software": "SW_D", "rg": "BMD", "user": "นัฐดนัย นามภิชัย", "hours": 0.0, "sessions": 1}, {"year": 2026, "month": "2026-05", "software": "SW_D", "rg": "EDC", "user": "สาธิต ศิริรักษ์", "hours": 0.0, "sessions": 3}, {"year": 2026, "month": "2026-04", "software": "orglab", "rg": "EIRG", "user": "เปรียว เอี่ยมละมัย", "hours": 0.0, "sessions": 1}]}`;
+const D = JSON.parse(DATA_JSON);
+
+// ── State ────────────────────────────────────────────────────
+let currentYear = 'all';
+let filterRG = '';
+let filterSW = '';
+let filterCenter = '';
+let tableData = [];
+let filteredTableData = [];
+let tablePage = 1;
+const PAGE_SIZE = 25;
+let sortKey = 'hours';
+let sortDir = -1;
+
+// ── Software colors ──────────────────────────────────────────
+const SW_COLORS = {
+  saltd:    '#2563EB',
+  ansyslmd: '#C2360A',
+  HPW:      '#15803D',
+  MLM:      '#7C3AED',
+  orglab:   '#C47408',
+  SW_D:     '#0E7490',
+  MSC:      '#BE185D',
+};
+const SW_COLORS_LIGHT = {
+  saltd:    'rgba(37,99,235,0.15)',
+  ansyslmd: 'rgba(194,54,10,0.15)',
+  HPW:      'rgba(21,128,61,0.15)',
+  MLM:      'rgba(124,58,237,0.15)',
+  orglab:   'rgba(196,116,8,0.15)',
+  SW_D:     'rgba(14,116,144,0.15)',
+  MSC:      'rgba(190,24,93,0.15)',
+};
+function swColor(name) { return SW_COLORS[name] || '#64748B'; }
+function swColorLight(name) { return SW_COLORS_LIGHT[name] || 'rgba(100,116,139,0.15)'; }
+
+// ── Theme ────────────────────────────────────────────────────
+let isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+  rebuildAllCharts();
+}
+function getColor(cssVar) {
+  return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+}
+
+// ── Charts registry ──────────────────────────────────────────
+const charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+// ── Init ─────────────────────────────────────────────────────
+function init() {
+  populateFilters();
+  render();
+}
+
+function populateFilters() {
+  const rgSel = document.getElementById('rg-filter');
+  const swSel = document.getElementById('sw-filter');
+  const centerSel = document.getElementById('center-filter');
+  D.meta.rgs.sort().forEach(r => {
+    const o = document.createElement('option'); o.value = r; o.textContent = r;
+    rgSel.appendChild(o);
+  });
+  D.meta.softwares.sort().forEach(s => {
+    const o = document.createElement('option'); o.value = s; o.textContent = s;
+    swSel.appendChild(o);
+  });
+  D.meta.centers.sort().forEach(c => {
+    const o = document.createElement('option'); o.value = c; o.textContent = c;
+    centerSel.appendChild(o);
+  });
+}
+
+function getCurrentData() {
+  // Get base data for current year
+  const base = D[currentYear === 'all' ? 'all' : currentYear];
+
+  // If no additional filters, use precomputed
+  if (!filterRG && !filterSW && !filterCenter) return base;
+
+  // Filter table data for custom views
+  return null; // signal to use table-filtered aggregation
+}
+
+function render() {
+  const base = D[currentYear === 'all' ? 'all' : currentYear];
+  renderKPIs(base);
+  renderInsights(base);
+  renderTrendChart(base);
+  renderSwDonut(base);
+  renderSwBar(base);
+  renderRGBar(base);
+  renderHeatmap(base);
+  renderTopUsers(base);
+  renderStackedBar(base);
+  buildTableData();
+  renderTable();
+}
+
+// ── KPIs ─────────────────────────────────────────────────────
+function fmt(n) {
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toLocaleString('th-TH', {maximumFractionDigits: 1});
+}
+function fmtFull(n) {
+  return n.toLocaleString('th-TH', {maximumFractionDigits: 1});
+}
+
+function renderKPIs(data) {
+  document.getElementById('kpi-hours').textContent = fmtFull(data.total_hours);
+  document.getElementById('kpi-hours-sub').textContent = 'รวมทุก Software';
+  document.getElementById('kpi-sessions').textContent = data.total_sessions.toLocaleString('th-TH');
+  document.getElementById('kpi-sessions-sub').textContent = 'การใช้งาน';
+  document.getElementById('kpi-users').textContent = data.unique_users;
+  document.getElementById('kpi-sw').textContent = data.unique_sw;
+  const avg = data.total_hours / data.total_sessions;
+  document.getElementById('kpi-avg').textContent = avg.toFixed(2);
+}
+
+// ── Insights ─────────────────────────────────────────────────
+function renderInsights(data) {
+  const container = document.getElementById('insights-grid');
+  const topSW = data.by_software[0];
+  const topRG = data.by_rg[0];
+  const topUser = data.top_users[0];
+  const peakMonth = [...data.by_month].sort((a,b) => b.hours - a.hours)[0];
+
+  const insights = [
+    {
+      color: swColor(topSW.software),
+      icon: '💿',
+      title: 'Software ใช้มากที่สุด',
+      text: `<strong>${topSW.software}</strong> — ${fmtFull(topSW.hours)} ชั่วโมง (${(topSW.hours/data.total_hours*100).toFixed(1)}% ของทั้งหมด)`
+    },
+    {
+      color: '#15803D',
+      icon: '🏢',
+      title: 'RG ใช้มากที่สุด',
+      text: `<strong>${topRG.rg}</strong> — ${fmtFull(topRG.hours)} ชั่วโมง, ${topRG.sessions.toLocaleString()} sessions`
+    },
+    {
+      color: '#7C3AED',
+      icon: '👤',
+      title: 'ผู้ใช้งานสูงสุด',
+      text: `<strong>${topUser.name}</strong> (${topUser.rg}) — ${fmtFull(topUser.hours)} ชั่วโมง`
+    },
+    {
+      color: '#C2360A',
+      icon: '📅',
+      title: 'เดือนที่ใช้งานสูงสุด',
+      text: `<strong>${peakMonth.month}</strong> — ${fmtFull(peakMonth.hours)} ชั่วโมง`
+    }
+  ];
+
+  container.innerHTML = insights.map(i => `
+    <div class="insight-card" style="--insight-color:${i.color}">
+      <div class="insight-icon">${i.icon}</div>
+      <div class="insight-title">${i.title}</div>
+      <div class="insight-text">${i.text}</div>
+    </div>
+  `).join('');
+}
+
+// ── Chart: Trend ─────────────────────────────────────────────
+function renderTrendChart(data) {
+  destroyChart('trend');
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  const labels = data.by_month.map(m => m.label);
+  const vals = data.by_month.map(m => m.hours);
+  const fg2 = getColor('--fg2');
+  const fg3 = getColor('--fg3');
+  const border = getColor('--border');
+
+  charts.trend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'ชั่วโมง',
+        data: vals,
+        borderColor: '#2563EB',
+        backgroundColor: 'rgba(37,99,235,0.08)',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: '#2563EB',
+        pointBorderColor: getColor('--surface'),
+        pointBorderWidth: 2,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtFull(ctx.raw)} ชั่วโมง`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: fg3, font: { family:'Sarabun', size: 11 } },
+          grid: { color: border }
+        },
+        y: {
+          ticks: { color: fg3, font: { family:'Sarabun', size: 11 }, callback: v => fmt(v) },
+          grid: { color: border }
+        }
+      }
+    }
+  });
+}
+
+// ── Chart: SW Donut ───────────────────────────────────────────
+function renderSwDonut(data) {
+  destroyChart('swDonut');
+  const ctx = document.getElementById('swDonutChart').getContext('2d');
+  const sws = data.by_software;
+  const fg = getColor('--fg');
+  const surface = getColor('--surface');
+
+  charts.swDonut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: sws.map(s => s.software),
+      datasets: [{
+        data: sws.map(s => s.hours),
+        backgroundColor: sws.map(s => swColor(s.software)),
+        borderColor: surface,
+        borderWidth: 2,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: fg,
+            font: { family: 'Sarabun', size: 11 },
+            boxWidth: 10, boxHeight: 10,
+            padding: 12
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtFull(ctx.raw)} ชั่วโมง (${(ctx.raw/data.total_hours*100).toFixed(1)}%)`
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Chart: SW Bar ─────────────────────────────────────────────
+function renderSwBar(data) {
+  destroyChart('swBar');
+  const ctx = document.getElementById('swBarChart').getContext('2d');
+  const sws = data.by_software;
+  const fg3 = getColor('--fg3');
+  const border = getColor('--border');
+
+  charts.swBar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sws.map(s => s.software),
+      datasets: [{
+        label: 'ชั่วโมง',
+        data: sws.map(s => s.hours),
+        backgroundColor: sws.map(s => swColor(s.software)),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtFull(ctx.raw)} ชั่วโมง`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: fg3, font: { family:'Sarabun', size: 12 } },
+          grid: { display: false }
+        },
+        y: {
+          ticks: { color: fg3, font: { family:'Sarabun', size: 11 }, callback: v => fmt(v) },
+          grid: { color: border }
+        }
+      }
+    }
+  });
+}
+
+// ── Chart: RG Bar ─────────────────────────────────────────────
+function renderRGBar(data) {
+  destroyChart('rgBar');
+  const ctx = document.getElementById('rgBarChart').getContext('2d');
+  const rgs = data.by_rg.slice(0, 12);
+  const fg3 = getColor('--fg3');
+  const border = getColor('--border');
+  const accent = '#2563EB';
+
+  charts.rgBar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: rgs.map(r => r.rg),
+      datasets: [{
+        label: 'ชั่วโมง',
+        data: rgs.map(r => r.hours),
+        backgroundColor: rgs.map((r,i) => i === 0 ? accent : 'rgba(37,99,235,0.4)'),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${fmtFull(ctx.raw)} ชั่วโมง`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: fg3, font: { family:'Sarabun', size: 11 }, callback: v => fmt(v) },
+          grid: { color: border }
+        },
+        y: {
+          ticks: { color: fg3, font: { family:'Sarabun', size: 12 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// ── Heatmap ───────────────────────────────────────────────────
+function renderHeatmap(data) {
+  const container = document.getElementById('heatmap-container');
+  const sws = data.sw_list || Object.keys(data.sw_rg[Object.keys(data.sw_rg)[0]] || {});
+  const rgs = data.rg_list || Object.keys(data.sw_rg);
+  const matrix = data.sw_rg;
+
+  // Find max value for color scaling
+  let maxVal = 0;
+  rgs.forEach(rg => {
+    if (!matrix[rg]) return;
+    sws.forEach(sw => { const v = matrix[rg][sw] || 0; if (v > maxVal) maxVal = v; });
+  });
+
+  function cellColor(val, max) {
+    if (val === 0 || !max) return isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+    const ratio = Math.pow(val / max, 0.5);
+    return isDark
+      ? `rgba(37,99,235,${0.1 + ratio * 0.75})`
+      : `rgba(37,99,235,${0.07 + ratio * 0.7})`;
+  }
+  function textColor(val, max) {
+    const ratio = max ? val / max : 0;
+    return ratio > 0.5 ? (isDark ? '#fff' : '#fff') : 'var(--fg)';
+  }
+
+  let html = '<table class="heatmap-table"><thead><tr><th>RG ↓ / SW →</th>';
+  sws.forEach(sw => html += `<th><span style="color:${swColor(sw)}">${sw}</span></th>`);
+  html += '</tr></thead><tbody>';
+
+  rgs.forEach(rg => {
+    if (!matrix[rg]) return;
+    const rowTotal = sws.reduce((s, sw) => s + (matrix[rg][sw] || 0), 0);
+    if (rowTotal === 0) return;
+    html += `<tr><td class="rg-label">${rg}</td>`;
+    sws.forEach(sw => {
+      const val = matrix[rg][sw] || 0;
+      const bg = cellColor(val, maxVal);
+      const txt = val > 0 ? textColor(val, maxVal) : 'var(--fg3)';
+      const tip = val > 0 ? `${rg} × ${sw}: ${fmtFull(val)} ชั่วโมง` : '—';
+      html += `<td style="background:${bg};color:${txt}" data-tip="${tip}">${val > 0 ? fmt(val) : '—'}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ── Top Users ─────────────────────────────────────────────────
+function renderTopUsers(data) {
+  const list = document.getElementById('users-list');
+  const users = data.top_users.slice(0, 10);
+  const maxH = users[0]?.hours || 1;
+
+  list.innerHTML = users.map((u, i) => `
+    <li class="user-item">
+      <span class="user-rank">${i+1}</span>
+      <div class="user-bar-wrap">
+        <div class="user-name">${u.name || 'Unknown'}</div>
+        <div class="user-rg">${u.rg} · ${u.sessions} sessions</div>
+        <div class="user-bar-bg">
+          <div class="user-bar" style="width:${(u.hours/maxH*100).toFixed(1)}%"></div>
+        </div>
+      </div>
+      <span class="user-hours">${fmtFull(u.hours)}<small style="font-size:10px;color:var(--fg3)"> h</small></span>
+    </li>
+  `).join('');
+}
+
+// ── Stacked Bar: SW per Month ─────────────────────────────────
+function renderStackedBar(data) {
+  destroyChart('stacked');
+  const ctx = document.getElementById('stackedBarChart').getContext('2d');
+  const months = data.by_month.map(m => m.label);
+  const monthKeys = data.by_month.map(m => m.month);
+  const sws = data.sw_list || [];
+  const matrix = data.sw_rg;
+  const fg3 = getColor('--fg3');
+  const border = getColor('--border');
+
+  // Build per-software per-month data from raw table
+  const swMonthData = {};
+  sws.forEach(sw => { swMonthData[sw] = new Array(months.length).fill(0); });
+
+  // Use by_software total per month approximation via records in table
+  // Actually build from D.table filtered by year
+  const yearFilter = currentYear !== 'all' ? parseInt(currentYear) : null;
+  D.table.forEach(row => {
+    if (yearFilter && row.year !== yearFilter) return;
+    const mi = monthKeys.indexOf(row.month);
+    if (mi >= 0 && swMonthData[row.software] !== undefined) {
+      swMonthData[row.software][mi] += row.hours;
+    }
+  });
+
+  const datasets = sws.map(sw => ({
+    label: sw,
+    data: swMonthData[sw].map(v => Math.round(v*10)/10),
+    backgroundColor: swColor(sw),
+    borderWidth: 0,
+    borderRadius: 2
+  }));
+
+  charts.stacked = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: months, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: getColor('--fg'),
+            font: { family: 'Sarabun', size: 10 },
+            boxWidth: 10, boxHeight: 10, padding: 8
+          }
+        },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtFull(ctx.raw)} h` }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { color: fg3, font: { family:'Sarabun', size: 10 } },
+          grid: { display: false }
+        },
+        y: {
+          stacked: true,
+          ticks: { color: fg3, font: { family:'Sarabun', size: 10 }, callback: v => fmt(v) },
+          grid: { color: border }
+        }
+      }
+    }
+  });
+}
+
+// ── Table ─────────────────────────────────────────────────────
+function buildTableData() {
+  const yearFilter = currentYear !== 'all' ? parseInt(currentYear) : null;
+  tableData = D.table.filter(row => {
+    if (yearFilter && row.year !== yearFilter) return false;
+    if (filterRG && row.rg !== filterRG) return false;
+    if (filterSW && row.software !== filterSW) return false;
+    return true;
+  });
+  filteredTableData = [...tableData];
+  tablePage = 1;
+}
+
+function filterTable() {
+  const q = document.getElementById('table-search').value.toLowerCase();
+  filteredTableData = tableData.filter(row =>
+    !q ||
+    (row.user || '').toLowerCase().includes(q) ||
+    (row.rg || '').toLowerCase().includes(q) ||
+    (row.software || '').toLowerCase().includes(q) ||
+    (row.month || '').includes(q)
+  );
+  tablePage = 1;
+  renderTable();
+}
+
+function sortTable() {
+  const v = document.getElementById('table-sort').value;
+  const [key, dir] = v.split('-');
+  filteredTableData.sort((a, b) => {
+    const av = key === 'month' ? (a.month || '') : a[key];
+    const bv = key === 'month' ? (b.month || '') : b[key];
+    return dir === 'desc' ? (bv > av ? 1 : -1) : (av > bv ? 1 : -1);
+  });
+  tablePage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const total = filteredTableData.length;
+  const start = (tablePage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, total);
+  const rows = filteredTableData.slice(start, end);
+
+  document.getElementById('table-info').textContent =
+    `แสดง ${start+1}–${end} จาก ${total.toLocaleString('th-TH')} รายการ`;
+
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = rows.map(row => `
+    <tr>
+      <td>${row.month}</td>
+      <td><span class="badge" style="background:${swColor(row.software)}22;color:${swColor(row.software)}">${row.software}</span></td>
+      <td>${row.rg}</td>
+      <td>${row.user || '—'}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:600">${fmtFull(row.hours)}</td>
+      <td style="text-align:right;color:var(--fg3)">${row.sessions}</td>
+    </tr>
+  `).join('');
+
+  // Pagination
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pageBtns = document.getElementById('page-btns');
+  let btns = '';
+  btns += `<button class="page-btn" ${tablePage<=1?'disabled':''} onclick="goPage(${tablePage-1})">‹</button>`;
+  const range = [];
+  for (let p = Math.max(1, tablePage-2); p <= Math.min(totalPages, tablePage+2); p++) range.push(p);
+  if (range[0] > 1) btns += `<button class="page-btn" onclick="goPage(1)">1</button>${range[0]>2?'<span style="padding:0 4px;color:var(--fg3)">…</span>':''}`;
+  range.forEach(p => btns += `<button class="page-btn ${p===tablePage?'active':''}" onclick="goPage(${p})">${p}</button>`);
+  if (range[range.length-1] < totalPages) btns += `${range[range.length-1]<totalPages-1?'<span style="padding:0 4px;color:var(--fg3)">…</span>':''}<button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  btns += `<button class="page-btn" ${tablePage>=totalPages?'disabled':''} onclick="goPage(${tablePage+1})">›</button>`;
+  pageBtns.innerHTML = btns;
+}
+
+function goPage(p) { tablePage = p; renderTable(); }
+
+// ── Year & Filters ────────────────────────────────────────────
+function setYear(year, btn) {
+  currentYear = year;
+  document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function applyFilters() {
+  filterRG = document.getElementById('rg-filter').value;
+  filterSW = document.getElementById('sw-filter').value;
+  filterCenter = document.getElementById('center-filter').value;
+  buildTableData();
+  renderTable();
+  // For charts, rg/sw filter uses table data approximation
+  // Re-render insights and KPIs using table aggregate
+  if (filterRG || filterSW || filterCenter) {
+    const totalHrs = tableData.reduce((s,r) => s+r.hours, 0);
+    const totalSess = tableData.reduce((s,r) => s+r.sessions, 0);
+    document.getElementById('kpi-hours').textContent = fmtFull(Math.round(totalHrs*10)/10);
+    document.getElementById('kpi-sessions').textContent = totalSess.toLocaleString('th-TH');
+    document.getElementById('kpi-avg').textContent = totalSess ? (totalHrs/totalSess).toFixed(2) : '0';
+  }
+}
+
+function resetFilters() {
+  filterRG = filterSW = filterCenter = '';
+  document.getElementById('rg-filter').value = '';
+  document.getElementById('sw-filter').value = '';
+  document.getElementById('center-filter').value = '';
+  render();
+}
+
+function rebuildAllCharts() {
+  const data = D[currentYear === 'all' ? 'all' : currentYear];
+  renderTrendChart(data);
+  renderSwDonut(data);
+  renderSwBar(data);
+  renderRGBar(data);
+  renderHeatmap(data);
+  renderStackedBar(data);
+}
+
+// ── Export CSV ────────────────────────────────────────────────
+function exportCSV() {
+  const rows = filteredTableData.length > 0 ? filteredTableData : D.table;
+  const header = 'ปี,เดือน,Software,RG,ผู้ใช้,ชั่วโมง,Sessions\n';
+  const body = rows.map(r =>
+    `${r.year},${r.month},${r.software},${r.rg},"${r.user}",${r.hours},${r.sessions}`
+  ).join('\n');
+  const blob = new Blob(['﻿' + header + body], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `software_usage_${currentYear}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Import (placeholder) ──────────────────────────────────────
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  alert(`ไฟล์ "${file.name}" ถูกเลือกแล้ว\n\nฟังก์ชัน Import จะรองรับในเวอร์ชันถัดไปครับ\nกรุณาใช้ Export เพื่อดาวน์โหลดข้อมูลปัจจุบัน`);
+  event.target.value = '';
+}
+
+// ── Start ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
